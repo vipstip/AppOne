@@ -1,8 +1,5 @@
 package com.example.appone;
 
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -13,43 +10,18 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 
 public class GetId {
     private static String url = "https://api.github.com/";
-    private Context context;
     private static HashMap<String,String> configbanner = new HashMap<>();
     private static HashMap<String,String> configintertitial = new HashMap<>();
     private static HashMap<String,Integer> placement = new HashMap<>();
     private static boolean checkConfigResponse = false;
-    public GetId(Context context) {
-        this.context = context;
-        URL url1 = null;
-        try {
-            url1 = new URL(url);
-            if (isConnected(url1)){
-                Log.e("BBBBB","OK");
-                new yourDataTask().execute(url);
-            } else {
-                Log.e("CCCCC","OK");
-                new java.util.Timer().schedule(
-                        new java.util.TimerTask() {
-                            @Override
-                            public void run() {
-                                new yourDataTask().execute(url);
-                            }
-                        },
-                        5000
-                );
-            }
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
+    public GetId() {
+        new yourDataTask().execute(url);
     }
 
     private static class yourDataTask extends AsyncTask<String, Void, String> {
@@ -217,34 +189,4 @@ public class GetId {
             Log.e("Err",e+"");
         }
     }
-
-    public boolean isConnected(URL url) {
-        try {
-            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo netInfo = cm.getActiveNetworkInfo();
-
-            if (netInfo != null && netInfo.isConnected()) {
-                // Network is available but check if we can get access from the network
-                HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
-                urlc.setRequestProperty("Connection", "close");
-                urlc.setConnectTimeout(3000); // Timeout 2 seconds.
-                urlc.connect();
-
-                if (urlc.getResponseCode() == 200) // Successful response.
-                {
-                    return true;
-                } else {
-                    Log.d("NO INTERNET", "NO INTERNET");
-                    return false;
-                }
-            } else {
-                Log.d("NO INTERNET Connection", "NO INTERNET Connection");
-                return false;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
 }

@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
     Button button,button2;
     String id1,id2;
     private int refreshCount = 0;
-
+    Constants constants;
     HashMap<String,String> keyword;
 
     String url = "https://api.github.com/";
@@ -31,22 +31,15 @@ public class MainActivity extends AppCompatActivity {
         txtJson2 = (TextView) findViewById(R.id.textView2);
         button = (Button) findViewById(R.id.btnAd);
         button2 = (Button) findViewById(R.id.btnAd2);
-        getId = new GetId(this);
+//        getId = new GetId(this);
 //        configBanner = new ConfigBanner();
-
+        constants = new Constants(this);
         keyword = new HashMap<>();
 
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                constants = new Constants(MainActivity.this);
-//                keyword = constants.getResponse();
-                try {
-                    Log.e("Err Man2",keyword.get("placement") + " ");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
 
 
             }

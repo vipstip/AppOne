@@ -22,7 +22,6 @@ import android.net.NetworkInfo;
 import android.os.CountDownTimer;
 import android.util.Log;
 
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -36,34 +35,28 @@ class Constants {
 
     private TimeoutCountDownTimerGetConfig timeoutCountDownTimerGetConfig;
 
+    private String placement;
+
     private static HashMap<String,String> configintertitial = new HashMap<>();
-    private static HashMap<String,Integer> placement = new HashMap<>();
+    private static HashMap<String,Integer> placements = new HashMap<>();
 
     public Constants(Context context) {
-        getId = new GetId(context);
         this.context = context;
-        TimeoutCountDownTimerCheckInternet timeoutCountDownTimerCheckInternet = new TimeoutCountDownTimerCheckInternet(3000, 500);
-//        timeoutCountDownTimerCheckInternet.start();
 
-        placement = getId.getPlacement();
-        configintertitial = getId.getConfigintertitial();
-        Integer key;
-        key = placement.get("full1");
 
-        Log.e("Keyword",key+" ");
-        Log.e("Keyword",configintertitial.toString()+" ");
-        timeoutCountDownTimerGetConfig = new TimeoutCountDownTimerGetConfig(30000,5000);
-        try {
-            URL abc = new URL(url);
-            if (isConnected(abc)){
-                Log.e("isConnected","OK");
-            }
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
 
     }
 
+    public void getConfig(String placement){
+        this.placement = placement;
+
+        getId = new GetId();
+
+        TimeoutCountDownTimerCheckInternet timeoutCountDownTimerCheckInternet = new TimeoutCountDownTimerCheckInternet(30000, 5000);
+        timeoutCountDownTimerCheckInternet.start();
+
+        timeoutCountDownTimerGetConfig = new TimeoutCountDownTimerGetConfig(30000,5000);
+    }
     //AppNexus
     // Prebid server config ids
 //    private static final String PBS_ACCOUNT_ID_APPNEXUS = "e8df28e7-78ff-452d-b3af-ff4df83df832";
@@ -98,9 +91,9 @@ class Constants {
             URL url1 = null;
             try {
                 url1 = new URL(url);
-                if (isConnected(url1)){
+                if (isConnected()){
                     checkInternet = true;
-                    Log.e("Connection","Ok");
+                    Log.d("Connection","Start get config from Server");
                     onFinish();
                     cancel();
                 } else
@@ -141,6 +134,7 @@ class Constants {
         public void onTick(long millisUntilFinished) {
             if (getId.isCheckConfigResponse()){
                 onFinish();
+                cancel();
             } else Log.d("Getting config","Waiting get config from Server");
         }
 
@@ -149,10 +143,10 @@ class Constants {
             if (!getId.isCheckConfigResponse()){
                 Log.d("Time out","Haven't got config from Server");
             } else {
-                placement = getId.getPlacement();
+                placements = getId.getPlacement();
                 configintertitial = getId.getConfigintertitial();
                 Integer key;
-                key = placement.get("full1");
+                key = placements.get("full1");
 
                 Log.e("Keyword",key+" ");
                 Log.e("Keyword",configintertitial.toString()+" ");
@@ -160,33 +154,19 @@ class Constants {
         }
     }
 
-    public boolean isConnected(URL url) {
-        try {
-            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo netInfo = cm.getActiveNetworkInfo();
-
-            if (netInfo != null && netInfo.isConnected()) {
-                // Network is available but check if we can get access from the network
-                HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
-                urlc.setRequestProperty("Connection", "start get config");
-                urlc.setConnectTimeout(3000); // Timeout 2 seconds.
-                urlc.connect();
-
-                if (urlc.getResponseCode() == 200) // Successful response.
-                {
-                    return true;
-                } else {
-                    Log.d("NO INTERNET", "NO INTERNET");
-                    return false;
-                }
-            } else {
-                Log.d("NO INTERNET Connection", "NO INTERNET Connection");
-                return false;
+    public boolean isConnected() {
+            ConnectivityManager connect = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (connect != null)
+            {
+                NetworkInfo[] information = connect.getAllNetworkInfo();
+                if (information != null)
+                    for (int x = 0; x < information.length; x++)
+                        if (information[x].getState() == NetworkInfo.State.CONNECTED)
+                        {
+                            return true;
+                        }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+            return false;
     }
 
 
