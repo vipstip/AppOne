@@ -19,8 +19,13 @@ public class GetId {
     private static HashMap<String,String> configbanner = new HashMap<>();
     private static HashMap<String,String> configintertitial = new HashMap<>();
     private static HashMap<String,Integer> placement = new HashMap<>();
+    private static HashMap<String,String> typeplacement = new HashMap<>();
+
     private static boolean checkConfigResponse = false;
     public GetId() {
+    }
+
+    public void startGetConfig(){
         new yourDataTask().execute(url);
     }
 
@@ -76,6 +81,9 @@ public class GetId {
     public HashMap<String, Integer> getPlacement() {
         return placement;
     }
+    public HashMap<String, String> getType() {
+        return typeplacement;
+    }
 
     public boolean isCheckConfigResponse() {
         return checkConfigResponse;
@@ -106,6 +114,7 @@ public class GetId {
                     JSONObject mainConfig = jsonArray.getJSONObject(i);
                     String type = mainConfig.getString("type");
                     placement.put(mainConfig.getString("placement"),i);
+                    typeplacement.put(mainConfig.getString("placement"),type);
                     if (type.equals("banner")){
 
                         configbanner.put("placement"+i,mainConfig.getString("placement"));
