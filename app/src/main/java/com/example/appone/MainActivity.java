@@ -19,6 +19,7 @@ public class MainActivity extends AppCompatActivity {
     private int refreshCount = 0;
 
     Banner banner;
+    Interstitial interstitial;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,16 +30,17 @@ public class MainActivity extends AppCompatActivity {
         adView = (FrameLayout)findViewById(R.id.adView);
         adView2 = (FrameLayout)findViewById(R.id.adView2);
         banner = new Banner(this);
-        banner.setTypeAd(TypeAd.BANNER);
         banner.setSize(AdSizes.MEDIUM_RECTANGLE);
         banner.setPlacement("banner1");
-
+//
+        interstitial = new Interstitial(this);
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-            banner.loadAd(adView);
-
+//            banner.loadAd(adView);
+                interstitial.setPlacement("full2");
+                interstitial.loadAd();
             }
 
         });
@@ -46,8 +48,7 @@ public class MainActivity extends AppCompatActivity {
         button2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                banner.setPlacement("banner2");
-//                banner.loadAd(adView2);
+                banner.loadAd(adView2);
 //                try {
 //                    Integer key = getId.getPlacement().get("full1");
 //                    Log.e("key",key + " ");

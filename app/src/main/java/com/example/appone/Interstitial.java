@@ -3,28 +3,22 @@ package com.example.appone;
 import android.content.Context;
 import android.os.CountDownTimer;
 import android.util.Log;
-import android.widget.FrameLayout;
-
-import androidx.annotation.NonNull;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
-import com.google.android.gms.ads.doubleclick.PublisherAdView;
+import com.google.android.gms.ads.doubleclick.PublisherInterstitialAd;
 
 import org.prebid.mobile.AdUnit;
-import org.prebid.mobile.BannerAdUnit;
 import org.prebid.mobile.Host;
+import org.prebid.mobile.InterstitialAdUnit;
 import org.prebid.mobile.OnCompleteListener;
 import org.prebid.mobile.PrebidMobile;
 import org.prebid.mobile.ResultCode;
-import org.prebid.mobile.VideoAdUnit;
-import org.prebid.mobile.addendum.AdViewUtils;
-import org.prebid.mobile.addendum.PbFindSizeError;
+import org.prebid.mobile.VideoInterstitialAdUnit;
 
-
-public class Banner {
-    private int refresCount = 0;
+public class Interstitial {
+    private int refreshCount = 0;
 
     private ResultCode resultCode;
     private AdUnit adUnit;
@@ -32,38 +26,34 @@ public class Banner {
     private AdSize adsize;
     private Context context;
     private int autoRefresh = 30000;
+
     private String adUnitID;
     private String placement = "";
     private AdListeners adListeners;
     private TypeAd typeAd = TypeAd.VIDEO;
 
-    private PublisherAdView amBanner;
+    private PublisherInterstitialAd amInterstitial;
     private PublisherAdRequest request;
 
     private Constants constants;
 
-    private FrameLayout layout;
-
     private int CountFailedLoad = 0;
     private CheckOnComplete checkOnComplete;
 
-    public void loadAd(FrameLayout layout){
+    public void loadAd() {
         stopAutoRefresh();
         CountFailedLoad = 0;
-        this.layout = layout;
         if (constants.isOnCompleteConfig()){
             setUpConfigAndLoad();
         } else {
             checkOnComplete.start();
         }
-
     }
-
     private void setUpConfigAndLoad(){
         SetupPB();
         setAdUnit();
-        setUpBanner(layout);
-        loadBanner();
+        setupAMInterstitial();
+        loadInterstitial();
     }
 
     private void SetupPB(){
@@ -71,7 +61,7 @@ public class Banner {
         if (typeAd == TypeAd.VIDEO){
             PrebidMobile.setPrebidServerHost(constants.VD_HOST);
             PrebidMobile.setPrebidServerAccountId(constants.VD_PBS_ACCOUNT_ID_APPNEXUS);
-            PrebidMobile.setStoredAuctionResponse(constants.VD_STORED_AUCTION_RESPONSE_CONFIG);
+//            PrebidMobile.setStoredAuctionResponse(constants.VD_STORED_AUCTION_RESPONSE_CONFIG);
             Log.e("constants.VD_HOST",constants.VD_HOST + " ");
             Log.e("constants.VD_PBS_ACC",constants.VD_PBS_ACCOUNT_ID_APPNEXUS + " ");
             Log.e("constants.VD_STORED",constants.VD_STORED_AUCTION_RESPONSE_CONFIG + " ");
@@ -90,100 +80,63 @@ public class Banner {
         this.autoRefresh = autoRefresh;
     }
 
-    public int getRefresCount() {
-        return refresCount;
+    public int getRefreshCount() {
+        return refreshCount;
     }
 
     public void setSize(int with, int height){
         this.adsize = new AdSize(with,height);
     }
 
-    public void setSize(AdSizes size){
-
-        switch (size) {
-            case MEDIUM_RECTANGLE:
-                this.adsize = AdSize.MEDIUM_RECTANGLE;
-                break;
-            case BANNER:
-                this.adsize = AdSize.BANNER;
-                break;
-            case LARGE_BANNER:
-                this.adsize = AdSize.LARGE_BANNER;
-                break;
-            case FULL_BANNER:
-                this.adsize = AdSize.FULL_BANNER;
-                break;
-            case LEADERBOARD:
-                this.adsize = AdSize.LEADERBOARD;
-                break;
-            case SMART_BANNER:
-                this.adsize = AdSize.SMART_BANNER;
-                break;
-        }
-
-    }
-
-    private void setAdUnit(){
-        try {
-            if (typeAd == TypeAd.VIDEO) {
-                // Prebid 1.6 update
-//                VideoBaseAdUnit.Parameters parameters = new VideoBaseAdUnit.Parameters();
-//                parameters.setMimes(Arrays.asList("video/mp4"));
-//
-//                parameters.setProtocols(Arrays.asList(Signals.Protocols.VAST_2_0));
-//                // parameters.setProtocols(Arrays.asList(new Signals.Protocols(2)));
-//
-//                parameters.setPlaybackMethod(Arrays.asList(Signals.PlaybackMethod.AutoPlaySoundOff));
-//                // parameters.setPlaybackMethod(Arrays.asList(new Signals.PlaybackMethod(2)));
-//
-//                parameters.setPlacement(Signals.Placement.InBanner);
-//                // parameters.setPlacement(new Signals.Placement(2));
-//
-//                VideoAdUnit adUnit = new VideoAdUnit(constants.VD_PUB_ADUNIT_ID, adsize.getWidth(), adsize.getHeight());
-//                adUnit.setParameters(parameters);
-//                this.adUnit = adUnit;
-                this.adUnit = new VideoAdUnit(constants.VD_PUB_ADUNIT_ID, adsize.getWidth(), adsize.getHeight(), VideoAdUnit.PlacementType.IN_BANNER);
-                Log.e("constants.VD_PUB_ADUNIT",constants.VD_PUB_ADUNIT_ID + " ");
-            } else {
-                this.adUnit = new BannerAdUnit(constants.PUB_ADUNIT_ID, adsize.getWidth(), adsize.getHeight());
-            }
-        } catch (Exception e) {
-            if (adsize == null){
-                Log.e("Err LoadAd","Size for banner NULL");
-            }
-        }
-    }
-
-    public void setAdUnitID(String adUnitID){
+    public void setAdUnit(String adUnitID){
         this.adUnitID = adUnitID;
     }
 
     public void setPlacement(String placement){
         if (this.placement.equals(placement)){
-            Log.e("placement"," OK ");
+            Log.d("Placement"," Duplicate placement!");
+        } else {
+            this.placement = placement;
+            constants.getConfigOfPlacement(placement,context);
         }
-        constants.getConfigOfPlacement(placement,context);
     }
 
-    public Banner(Context context){
+    public void setAdUnit(){
+        if (adsize != null && typeAd != TypeAd.VIDEO)
+        {
+            this.adUnit = new InterstitialAdUnit(constants.VD_PUB_ADUNIT_ID,adsize.getWidth(),adsize.getHeight());
+            Log.e("constants.VD_DFP_ADUNIT",constants.VD_DFP_ADUNIT_ID_Prebid + " ");
+        }
+        else if (typeAd == TypeAd.VIDEO){
+            this.adUnit = new VideoInterstitialAdUnit(constants.VD_PUB_ADUNIT_ID);
+            Log.e("constants.VD_DFP_ADUNIT",constants.VD_DFP_ADUNIT_ID_Prebid + " ");
+        }
+        else this.adUnit = new InterstitialAdUnit(constants.PUB_ADUNIT_ID);
+    }
+
+    public Interstitial(Context context){
         this.context = context;
         checkOnComplete = new CheckOnComplete(30000,3000);
         constants = new Constants();
     }
 
-    private void setUpBanner(final FrameLayout adFrame){
-        this.amBanner = new PublisherAdView(context);
+    private void setupAMInterstitial() {
+        this.amInterstitial = new PublisherInterstitialAd(context);
         if (typeAd == TypeAd.VIDEO){
-            amBanner.setAdUnitId(constants.VD_DFP_ADUNIT_ID_Prebid);
-            Log.e("constants.VD_DFP_ADUNIT",constants.VD_DFP_ADUNIT_ID_Prebid + " ");
-        } else {
-            amBanner.setAdUnitId(constants.DFP_ADUNIT_ID_Prebid);
-        }
-        amBanner.setAdSizes(adsize);
-        adFrame.removeAllViews();
-        adFrame.addView(amBanner);
+            amInterstitial.setAdUnitId(constants.VD_DFP_ADUNIT_ID_Prebid);
+        } else  amInterstitial.setAdUnitId(constants.DFP_ADUNIT_ID_Prebid);
 
-        amBanner.setAdListener(new AdListener(){
+        amInterstitial.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+                super.onAdLoaded();
+                CountFailedLoad = 0;
+                amInterstitial.show();
+                adUnit.stopAutoRefresh();
+                Log.e("Loaded", " OK ");
+                adListeners.onAdLoaded();
+            }
+
             @Override
             public void onAdClicked() {
                 super.onAdClicked();
@@ -214,56 +167,36 @@ public class Banner {
                 adListeners.onAdOpened();
             }
 
-            @Override
-            public void onAdLoaded() {
-                super.onAdLoaded();
-                AdViewUtils.findPrebidCreativeSize(amBanner, new AdViewUtils.PbFindSizeListener() {
-                    @Override
-                    public void success(int width, int height) {
-                        amBanner.setAdSizes(new AdSize(width, height));
-                    }
-
-                    @Override
-                    public void failure(@NonNull PbFindSizeError error) {
-                        Log.d("MyTag", "error: " + error);
-                    }
-                });
-                CountFailedLoad = 0;
-                adListeners.onAdLoaded();
-            }
 
             @Override
             public void onAdFailedToLoad(int i) {
                 super.onAdFailedToLoad(i);
-                stopAutoRefresh();
+                adUnit.stopAutoRefresh();
                 if (CountFailedLoad < 3){
-                    loadBanner();
+                    loadInterstitial();
                     CountFailedLoad++;
                 }
                 if (typeAd == TypeAd.VIDEO) {
                     typeAd = TypeAd.BANNER;
-                    loadAd(layout);
+                    loadAd();
                 }
                 Log.e("MyTag", "ok" + CountFailedLoad);
                 adListeners.onAdFailedToLoad(i);
             }
         });
     }
-
-    private void loadBanner(){
-        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
+    private void loadInterstitial() {
+        adUnit.setAutoRefreshPeriodMillis(autoRefresh);
+        PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
         request = builder.build();
-        try {
-            adUnit.setAutoRefreshPeriodMillis(autoRefresh);
-            adUnit.fetchDemand(request, new OnCompleteListener() {
-                @Override
-                public void onComplete(ResultCode resultCode) {
-                    Banner.this.resultCode = resultCode;
-                    amBanner.loadAd(request);
-                    refresCount++;
-                }
-            });
-        } catch (Exception ignored) { }
+        adUnit.fetchDemand(request, new OnCompleteListener() {
+            @Override
+            public void onComplete(ResultCode resultCode) {
+                Interstitial.this.resultCode = resultCode;
+                amInterstitial.loadAd(request);
+                refreshCount++;
+            }
+        });
     }
 
     public void setAdlistenners(final AdListeners adlistenners){
@@ -277,7 +210,7 @@ public class Banner {
     }
 
     public void startAutoRefresh(){
-        loadBanner();
+        loadInterstitial();
     }
 
     public void desTroy(){
@@ -286,6 +219,7 @@ public class Banner {
             adUnit = null;
         }
     }
+
     class CheckOnComplete extends CountDownTimer {
 
         /**
